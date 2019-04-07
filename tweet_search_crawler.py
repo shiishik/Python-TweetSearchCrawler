@@ -32,16 +32,16 @@ ACCESS_TOKEN_SECRET = 'XXXXXXXXXX'
 parser = argparse.ArgumentParser()
 parser.add_argument("--query", required = True, help="Search Query", type=str)
 parser.add_argument("--dbpath", required = True, help="SQLite Database Path", type=str)
+parser.add_argument("--last-tweet-id", help="[optional] Request max_id parameter", type=int, default=0)
 parser.add_argument("--safe-mode", help="[optional] Stop if registered", type=strtobool, default='True')
 parser.add_argument("--debug-mode", help="[optional] Do not write database and recursion", type=strtobool, default='False')
-parser.add_argument("--last-tweet-id", help="[optional] Request max_id parameter", type=int, default=0)
 args = parser.parse_args()
 print("Command Line Parameter :: ", args, sep="\n")
 query = args.query
 dbpath = args.dbpath
+last_tweet_id = args.last_tweet_id
 safe_mode = bool(args.safe_mode)
 debug_mode = bool(args.debug_mode)
-last_tweet_id = args.last_tweet_id
 
 #
 # twitter API Request
