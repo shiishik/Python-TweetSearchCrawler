@@ -19,6 +19,6 @@ $ python tweet_search_crowler.py  --query 'yahooooo' --dbpath 'yahooooo.db' --de
 ### データの確認
 SQLiteに保存されたデータを確認
 ```
-$ sqlite3 test.db
+$ sqlite3 yahooooo.db
 sqlite> select * from tweet limit 10;
 ```
