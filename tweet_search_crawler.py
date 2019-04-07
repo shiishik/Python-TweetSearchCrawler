@@ -36,7 +36,7 @@ parser.add_argument("--safe-mode", help="[optional] Stop if registered", type=st
 parser.add_argument("--debug-mode", help="[optional] Do not write database and recursion", type=strtobool, default='False')
 parser.add_argument("--last-tweet-id", help="[optional] Request max_id parameter", type=int, default=0)
 args = parser.parse_args()
-print("Command Line Parameter :: ", args)
+print("Command Line Parameter :: ", args, sep="\n")
 query = args.query
 dbpath = args.dbpath
 safe_mode = bool(args.safe_mode)
@@ -52,12 +52,12 @@ q = query + ' -filter:retweets'
 params = {
     'q' : q,
     'count' : 100,
-    #'lang' : 'ja',
-    #'locale' : 'ja',
+    'lang' : 'ja',
+    'locale' : 'ja',
     'result_type' : 'mixed',
     #'until' : '2019-04-01',
     }
-print("Request Parameter :: ", params)
+print("Request Parameter :: ", params, sep="\n")
 
 #
 # Database session 
@@ -81,9 +81,11 @@ while(True):
     req = twitter.get(url, params = params)
 
     if req.status_code != 200:
+        # Limit: 180 requests in 15 minutes requests
         print("ERROR: %d" % req.status_code)
-        print('Sleeping...')
-        time.sleep(5*60)
+        sleep_sec = 5 * 60
+        print('Sleeping %d sec ...' % sleep_sec)
+        time.sleep(sleep_sec)
         continue
 
     search_timeline = json.loads(req.text)
@@ -113,7 +115,7 @@ while(True):
          ]  
 
         if debug_mode:
-            print("tweet data :: ", bind)
+            print("tweet data :: ", bind, sep="\n")
             continue
 
         try:
@@ -121,13 +123,13 @@ while(True):
             connect.commit()
             no_success = False
         except Exception as e:
-            print("Exception _query=%s, tweet_id=" % e, tweet['id_str'])
+            print("Exception _query=%s, tweet_id=%s" % (e, tweet['id_str']))
 
     if no_success and safe_mode:
         print("already registered.")
         break
 
-    time.sleep(5)
+    time.sleep(3)
 
 connect.close()
 print("Finish...")
