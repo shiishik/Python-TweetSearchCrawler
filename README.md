@@ -8,11 +8,11 @@ Twitter Developerにアカウント登録し、 API key/API secret key/Access to
 コードの CONSUMER_KEY/CONSUMER_SECRET_KEY/ACCESS_TOKEN/ACCESS_TOKEN_SECRET に発行した各値を入れておく。  
 ### クロール実行
 7日分取得
-`
+```
 $ python tweet_search_crowler.py  --query 'yahooooo' --dbpath 'yahooooo.db'
-`
+```
 ### クロール確認
 DB保存せず、取得データの表示のみ
-`
+```
 $ python tweet_search_crowler.py  --query 'yahooooo' --dbpath 'yahooooo.db' --debug-mode true
-`
+```
