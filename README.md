@@ -16,3 +16,9 @@ DB保存せず、取得データの表示のみ
 ```
 $ python tweet_search_crowler.py  --query 'yahooooo' --dbpath 'yahooooo.db' --debug-mode true
 ```
+### データの確認
+SQLiteに保存されたデータを確認
+```
+$ sqlite3 test.db
+sqlite> select * from tweet limit 10;
+```
