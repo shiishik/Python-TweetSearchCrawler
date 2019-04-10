@@ -27,20 +27,20 @@ ACCESS_TOKEN_SECRET = 'XXXXXXXXXX'
 # Command Line Parameter
 #
 # example:
-# $ python tweet_search_crowler.py --query 'yahooooo' --dbpath 'yahooooo.db'
+# $ python tweet_search_crawler.py --query 'yahooooo' --dbpath 'yahooooo.db'
 #
 parser = argparse.ArgumentParser()
 parser.add_argument("--query", required = True, help="Search Query", type=str)
 parser.add_argument("--dbpath", required = True, help="SQLite Database Path", type=str)
 parser.add_argument("--last-tweet-id", help="[optional] Request max_id parameter", type=int, default=0)
-parser.add_argument("--safe-mode", help="[optional] Stop if registered", type=strtobool, default='True')
+parser.add_argument("--full-crawl", help="[optional] Crawl All", type=strtobool, default='False')
 parser.add_argument("--debug-mode", help="[optional] Do not write database and recursion", type=strtobool, default='False')
 args = parser.parse_args()
 print("Command Line Parameter :: ", args, sep="\n")
 query = args.query
 dbpath = args.dbpath
 last_tweet_id = args.last_tweet_id
-safe_mode = bool(args.safe_mode)
+full_crawl = bool(args.full_crawl)
 debug_mode = bool(args.debug_mode)
 
 #
@@ -72,21 +72,28 @@ if not debug_mode:
 #
 # crawl twitter
 #
+dberror_cnt = 0
+dberror_limit = 1000
 while(True):
     if last_tweet_id:
         params['max_id']  = last_tweet_id - 1
 
     print("---------- %s ----------" % datetime.datetime.now())
-    print("Request search API :: last_tweet_id=%s" % last_tweet_id)
+    print("Request search API :: params=%s" % params)
     req = twitter.get(url, params = params)
 
     if req.status_code != 200:
         # Limit: 180 requests in 15 minutes requests
-        print("ERROR: %d" % req.status_code)
-        sleep_sec = 5 * 60
-        print('Sleeping %d sec ...' % sleep_sec)
-        time.sleep(sleep_sec)
-        continue
+        print("HTTP Status Error :: %d" % req.status_code)
+        if req.status_code == 429:
+            print('Limit Error :: 180 calls every 15 minutes.')
+            sleep_sec = 5 * 60
+            print('Sleep %d sec ...' % sleep_sec)
+            time.sleep(sleep_sec)
+            continue
+        else:
+            print('Stop because an error occurred.')
+            break
 
     search_timeline = json.loads(req.text)
 
@@ -94,7 +101,6 @@ while(True):
         print("statuses is empty.")
         break
 
-    no_success = True
     for tweet in search_timeline['statuses']:
         #print("tweet row data :: ", tweet)
         last_tweet_id = tweet['id']
@@ -115,21 +121,24 @@ while(True):
          ]  
 
         if debug_mode:
-            print("tweet data :: ", bind, sep="\n")
+            print("Tweet data :: ", bind, sep="\n")
             continue
 
         try:
             cursor.execute("insert into tweet (tweet_id, user_id, user_screen_name, user_name, user_description, search_query, tweet_text, created_at_jpdate, created_at_utime) values (?,?,?,?,?,?,?,?,?)", bind)
             connect.commit()
-            no_success = False
+            print("Inserted :: tweet_id=%s" % tweet['id_str'])
+            dberror_cnt = 0
         except Exception as e:
-            print("Exception _query=%s, tweet_id=%s" % (e, tweet['id_str']))
+            print("Exception :: tweet_id=%s, _query=%s" % (tweet['id_str'], e))
+            dberror_cnt += 1
 
-    if no_success and safe_mode:
-        print("already registered.")
+    if dberror_cnt >= dberror_limit and not full_crawl:
+        print("Already Inserted.")
         break
 
-    time.sleep(3)
+    print("Last Tweet ID :: %s" % last_tweet_id)
+    time.sleep(2)
 
 connect.close()
 print("Finish...")
