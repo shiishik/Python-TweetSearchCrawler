@@ -15,7 +15,7 @@ $ python tweet_search_crowler.py  --query 'yahooooo' --dbpath 'yahooooo.db'
 ### 指定のtweetからキーワードクロール実行
 途中で処理を抜けてしまった場合は、再開したいtweet IDを指定することで途中からクロールを再開する。
 ```
-$ python tweet_search_crowler.py  --query 'yahooooo' --dbpath 'yahooooo.db'
+$ python tweet_search_crowler.py  --query 'yahooooo' --dbpath 'yahooooo.db' --last-tweet-id 1234567890
 ```
 ### キーワードクロール確認
 DB保存せず、取得データの表示のみ行いたい場合。
