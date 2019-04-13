@@ -32,14 +32,16 @@ ACCESS_TOKEN_SECRET = 'XXXXXXXXXX'
 parser = argparse.ArgumentParser()
 parser.add_argument("--query", required = True, help="Search Query", type=str)
 parser.add_argument("--dbpath", required = True, help="SQLite Database Path", type=str)
-parser.add_argument("--last-tweet-id", help="[optional] Request max_id parameter", type=int, default=0)
-parser.add_argument("--full-crawl", help="[optional] Crawl All", type=strtobool, default='False')
-parser.add_argument("--debug-mode", help="[optional] Do not write database and recursion", type=strtobool, default='False')
+parser.add_argument("--max-id", help="[optional] Returns results with an ID less than or equal to the specified ID", type=int, default=0)
+parser.add_argument("--until", help="[optional] Returns tweets created before the given date(YYYY-MM-DD)", type=str, default='')
+parser.add_argument("--full-crawl", help="[optional] Crawl all Tweet", type=strtobool, default='False')
+parser.add_argument("--debug-mode", help="[optional] Log only", type=strtobool, default='False')
 args = parser.parse_args()
 print("Command Line Parameter :: ", args, sep="\n")
 query = args.query
 dbpath = args.dbpath
-last_tweet_id = args.last_tweet_id
+max_id = args.max_id
+until = args.until
 full_crawl = bool(args.full_crawl)
 debug_mode = bool(args.debug_mode)
 
@@ -55,7 +57,7 @@ params = {
     'lang' : 'ja',
     'locale' : 'ja',
     'result_type' : 'mixed',
-    #'until' : '2019-04-01',
+    'until' : until,
     }
 print("Request Parameter :: ", params, sep="\n")
 
@@ -75,8 +77,8 @@ if not debug_mode:
 dberror_cnt = 0
 dberror_limit = 1000
 while(True):
-    if last_tweet_id:
-        params['max_id']  = last_tweet_id - 1
+    if max_id:
+        params['max_id']  = max_id
 
     print("---------- %s ----------" % datetime.datetime.now())
     print("Request search API :: params=%s" % params)
@@ -97,13 +99,16 @@ while(True):
 
     search_timeline = json.loads(req.text)
 
-    if search_timeline['statuses'] == []:
+    if len(search_timeline['statuses']) <= 1:
         print("statuses is empty.")
         break
 
     for tweet in search_timeline['statuses']:
+        if max_id == tweet['id']:
+            continue
+
         #print("tweet row data :: ", tweet)
-        last_tweet_id = tweet['id']
+        max_id = tweet['id']
         time_utc = time.strptime(tweet['created_at'], '%a %b %d %H:%M:%S +0000 %Y')
         unix_time = calendar.timegm(time_utc)
         time_local = time.localtime(unix_time)
@@ -137,7 +142,7 @@ while(True):
         print("Already Inserted.")
         break
 
-    print("Last Tweet ID :: %s" % last_tweet_id)
+    print("Last Tweet ID :: %s" % max_id)
     time.sleep(2)
 
 connect.close()
