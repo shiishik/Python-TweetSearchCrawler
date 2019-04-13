@@ -20,7 +20,7 @@ $ python tweet_search_crowler.py  --query 'yahooooo' --dbpath 'yahooooo.db' --ma
 ### 指定の日付以前でキーワードクロール実行
 指定の日付以前のtweetのみクロールする場合。
 ```
-$ python tweet_search_crowler.py  --query 'yahooooo' --dbpath 'yahooooo.db' until ２０１９−０４−０１
+$ python tweet_search_crowler.py  --query 'yahooooo' --dbpath 'yahooooo.db' --until ２０１９−０４−０１
 ```
 ### キーワードクロール確認
 DB保存せず、取得データの表示のみ行いたい場合。
