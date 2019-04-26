@@ -75,7 +75,7 @@ if not debug_mode:
 # crawl twitter
 #
 dberror_cnt = 0
-dberror_limit = 1000
+dberror_limit = 2000
 while(True):
     if max_id:
         params['max_id']  = max_id
@@ -143,7 +143,7 @@ while(True):
         break
 
     print("Last Tweet ID :: %s" % max_id)
-    time.sleep(2)
+    time.sleep(1)
 
 connect.close()
 print("Finish...")
