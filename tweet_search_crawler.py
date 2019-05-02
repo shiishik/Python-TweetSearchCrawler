@@ -76,6 +76,8 @@ if not debug_mode:
 #
 dberror_cnt = 0
 dberror_limit = 2000
+reqerror_cnt = 0
+reqerror_limit = 10
 while(True):
     if max_id:
         params['max_id']  = max_id
@@ -94,9 +96,16 @@ while(True):
             time.sleep(sleep_sec)
             continue
         else:
-            print('Stop because an error occurred.')
-            break
+            if reqerror_cnt >= reqerror_limit:
+                print('Stop because an error occurred.')
+                break
+            else:
+                print('Sleep because an error occurred.')
+                reqerror_cnt += 1
+                time.sleep(10)
+                continue
 
+    reqerror_cnt = 0
     search_timeline = json.loads(req.text)
 
     if len(search_timeline['statuses']) <= 1:
@@ -143,7 +152,7 @@ while(True):
         break
 
     print("Last Tweet ID :: %s" % max_id)
-    time.sleep(1)
+    time.sleep(2)
 
 connect.close()
 print("Finish...")
