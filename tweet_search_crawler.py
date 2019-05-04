@@ -114,6 +114,7 @@ while(True):
 
     for tweet in search_timeline['statuses']:
         if max_id == tweet['id']:
+            print("Skip max_id. :: tweet_id=%s" % tweet['id_str'])
             continue
 
         #print("tweet row data :: ", tweet)
