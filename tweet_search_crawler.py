@@ -67,15 +67,15 @@ print("Request Parameter :: ", params, sep="\n")
 connect = sqlite3.connect(dbpath)
 cursor = connect.cursor()
 if not debug_mode:
-    create_sql = "CREATE TABLE IF NOT EXISTS tweet( tweet_id integer primary key, user_id integer, user_screen_name text, user_name text, user_description text, search_query text, tweet_text text, created_at_jpdate numeric, created_at_utime numeric)"
+    create_sql = "CREATE TABLE IF NOT EXISTS tweet(tweet_id integer primary key, user_id integer, user_screen_name text, user_name text, user_description text, search_query text, tweet_text text, created_at_jpdate numeric, created_at_utime numeric)"
     cursor.execute(create_sql)
     connect.commit()
 
 #
 # crawl twitter
 #
-dberror_cnt = 0
-dberror_limit = 2000
+registered_cnt = 0
+registered_limit = 3000
 reqerror_cnt = 0
 reqerror_limit = 10
 while(True):
@@ -90,7 +90,7 @@ while(True):
         # Limit: 180 requests in 15 minutes requests
         print("HTTP Status Error :: %d" % req.status_code)
         if req.status_code == 429:
-            print('Limit Error :: 180 calls every 15 minutes.')
+            print('Limit error :: 180 calls every 15 minutes.')
             sleep_sec = 5 * 60
             print('Sleep %d sec ...' % sleep_sec)
             time.sleep(sleep_sec)
@@ -109,12 +109,12 @@ while(True):
     search_timeline = json.loads(req.text)
 
     if len(search_timeline['statuses']) <= 1:
-        print("statuses is empty.")
+        print("Statuses is empty.")
         break
 
     for tweet in search_timeline['statuses']:
         if max_id == tweet['id']:
-            print("Skip max_id. :: tweet_id=%s" % tweet['id_str'])
+            print("Skip max_id :: tweet_id=%s" % tweet['id_str'])
             continue
 
         #print("tweet row data :: ", tweet)
@@ -140,19 +140,26 @@ while(True):
             continue
 
         try:
-            cursor.execute("insert into tweet (tweet_id, user_id, user_screen_name, user_name, user_description, search_query, tweet_text, created_at_jpdate, created_at_utime) values (?,?,?,?,?,?,?,?,?)", bind)
+            cursor.execute("SELECT COUNT(*) AS count FROM tweet WHERE tweet_id = ?", [tweet['id_str']])
+            result = cursor.fetchall()
+            if result[0][0] > 0:
+                print("Already inserted :: tweet_id=%s" % tweet['id_str'])
+                registered_cnt += 1
+                continue
+
+            registered_cnt = 0
+            cursor.execute("INSERT INTO tweet (tweet_id, user_id, user_screen_name, user_name, user_description, search_query, tweet_text, created_at_jpdate, created_at_utime) VALUES (?,?,?,?,?,?,?,?,?)", bind)
             connect.commit()
-            print("Inserted :: tweet_id=%s" % tweet['id_str'])
-            dberror_cnt = 0
+            print("Insert :: tweet_id=%s" % tweet['id_str'])
         except Exception as e:
             print("Exception :: tweet_id=%s, _query=%s" % (tweet['id_str'], e))
-            dberror_cnt += 1
 
-    if dberror_cnt >= dberror_limit and not full_crawl:
-        print("Already Inserted.")
+    if registered_cnt >= registered_limit and not full_crawl:
+        print("Maybe the remaining tweets are registered.")
         break
 
     print("Last Tweet ID :: %s" % max_id)
+    print("Continuous registered count :: %s" % registered_cnt)
     time.sleep(2)
 
 connect.close()
